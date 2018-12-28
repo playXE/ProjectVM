@@ -1,6 +1,5 @@
 pub mod value;
 
-use crate::instruction::Instruction;
 pub use self::value::Value;
 
 use std::sync::Arc;
@@ -14,14 +13,14 @@ pub fn Ptr<T>(value: T) -> Ptr<T> {
     Arc::new(value)
 }
 
-#[derive(Clone,Debug,PartialEq)]
+#[derive(Clone,Debug,PartialEq,Hash,Eq)]
 pub struct StructSig {
     pub name: Name,
     pub idx: u32,
     pub types: Vec<Ptr<Type>>,
 }
 
-#[derive(Clone,Debug,PartialEq)]
+#[derive(Clone,Debug,PartialEq,Hash,Eq)]
 pub struct FunctionSig {
     pub name: Name,
     pub idx: u32,
@@ -29,26 +28,56 @@ pub struct FunctionSig {
     pub args: Vec<Ptr<Type>>,
     pub ret_ty: Ptr<Type>,
 }
+
+#[derive(Clone,Debug,PartialEq)]
 pub struct Struct {
     pub sig: StructSig,
     pub tys: Vec<Type>,
-    
-
 }
+
+use crate::instruction::Block;
 
 #[derive(Clone)]
 pub enum FunctionKind {
     Native(&'static Fn(Vec<Ptr<Value>>) -> Value),
-    Internal(Vec<Instruction>),
+    Internal(Vec<Block>),
 }
 
-#[derive(Clone)]
+use std::fmt;
+
+impl fmt::Debug for FunctionKind {
+    fn fmt(&self,f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,"")
+    }
+}
+
+impl fmt::Display for StructSig {
+    fn fmt(&self,f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,"struct ({})",crate::utils::vec_as_str(self.types.clone()))
+    }
+}
+
+
+impl fmt::Display for FunctionSig {
+    fn fmt(&self,f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,"({}) -> {}",crate::utils::vec_as_str(self.args.clone()),self.ret_ty)
+    }
+}
+
+
+#[derive(Clone,Debug)]
 pub struct Function {
     pub kind: FunctionKind,
     pub sig: FunctionSig,
 }
 
-#[derive(Clone,Debug,PartialEq)]
+impl fmt::Display for Function {
+    fn fmt(&self,f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,"({}) -> {}",crate::utils::vec_as_str(self.sig.args.clone()),self.sig.ret_ty)
+    }
+}
+
+#[derive(Clone,Debug,PartialEq,Hash,Eq)]
 pub enum Type {
     /// Int<size> 
     Int8,
@@ -60,6 +89,8 @@ pub enum Type {
     Float,
     /// Floating point with 64 bits
     Double,
+
+    Void,
 
     /// ref: reference type
     Ref(Ptr<Type>),
@@ -75,6 +106,29 @@ pub enum Type {
     UStructPtr(Ptr<StructSig>),
 
     Array(Ptr<Type>,u32),
+}
+
+impl fmt::Display for Type {
+    fn fmt(&self,f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        
+        use self::Type::*;
+        match self {
+            Int8 => write!(f,"int8"),
+            Int16 => write!(f,"int16"),
+            Int32 => write!(f,"int32"),
+            Int64 => write!(f,"int64"),
+            Float => write!(f,"float"),
+            Double => write!(f,"double"),
+            UPtr(ptr) => write!(f,"uptr<{}>",ptr),
+            Ref(ptr)  => write!(f,"ref<{}>",ptr),
+            FuncSig(sig) => write!(f,"@func<{}>",sig),
+            StructSig(sig) => write!(f,"@struct<{}>",sig),
+            UFuncPtr(ptr)  => write!(f,"@ufuncptr<{}>",ptr),
+            UStructPtr(ptr) => write!(f,"@ustructptr<{}>",ptr),
+            Array(ty,size) => write!(f, "array<{} {}>",ty,size),
+            Void => write!(f, "void"),
+        }
+    }
 }
 
 impl Type {

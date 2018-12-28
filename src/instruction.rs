@@ -3,26 +3,36 @@ use crate::types::Ptr;
 
 #[derive(Debug,Clone)]
 pub enum Instruction {
+    /// Load immediate value
     LoadImm(u32,i64,Type),
+    /// Load float
     LoadFloat(u32,f32),
+    /// Load double
     LoadDouble(u32,f64),
+    /// Load pointer to some type
     LoadPtr(u32,Ptr<Vec<u8>>,Option<Type>),
 
+
+    /// Integer binary operation
     IntBin(BinOp,u32,u32),
+
+    /// Float binary operation
     FloatBin(BinOp,u32,u32),
     ConvOp(u32,Type,Type),
-
+    /// Call value at reg with some argument counter
     Call(u32,u32),
 
-
+    /// Branch if value at reg != 0 (>= 0)
     BranchNZ(u32,u32),
+    /// Branch if value at reg is zero
     BranchZ(u32,u32),
+    /// Goto block
     Branch(u32),
-
+    /// Push value to stack
     Push(u32),
 
-    LoadOffset(u32,u32,i32),
-    StoreOffset(u32,u32,i32),
+    //LoadOffset(u32,u32,i32),
+    //StoreOffset(u32,u32,i32),
 
     LoadGlobal(u32,u32),
     StoreGlobal(u32,u32),
@@ -31,6 +41,7 @@ pub enum Instruction {
     RetFloat(u32),
     RetDouble(u32),
     RetPtr(u32),
+    RetVoid,
 }
 
 
@@ -91,7 +102,6 @@ impl From<u8> for BinOp {
 #[derive(Clone,Debug)]
 pub struct Block {
     pub instructions: Vec<Instruction>,
-
     pub ip: usize,
 }
 
@@ -105,7 +115,14 @@ impl Block {
 
     pub fn next_ins(&mut self) -> &Instruction {
         let ins = &self.instructions[self.ip];
-        self.ip += 1;
         ins
+    }
+}
+
+impl From<Vec<Instruction>> for Block {
+    fn from(v: Vec<Instruction>) -> Block {
+        let mut block = Block::new();
+        block.instructions = v;
+        block
     }
 }

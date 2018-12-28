@@ -11,6 +11,14 @@ pub struct Value {
 
 
 impl Value {
+    pub fn new_int(ty: Type,imm: i64) -> Value {
+        let bytes: [u8;8] = unsafe {::std::mem::transmute(imm)};
+        Value {
+            ty,
+            mem: bytes.to_vec()
+        }
+    }
+
     pub fn new(ty: Type) -> Value {
         Value {
             ty: ty,
@@ -54,9 +62,9 @@ impl Value {
         if self.ty.is_int() {
             match self.ty {
                 Type::Int8 => self.mem[0] as i8,
-                Type::Int16 => self.get_int16(),
-                Type::Int32 => self.get_int32(),
-                Type::Int64 => self.get_int64(),
+                Type::Int16 => self.get_int16() as i8,
+                Type::Int32 => self.get_int32() as i8,
+                Type::Int64 => self.get_int64() as i8,
                 _ => unreachable!()
             }
         } else {
